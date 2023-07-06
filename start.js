@@ -27,11 +27,11 @@ const {
 
 let nftAutoBuyInformation;
 let activeFleets = [];
-const triggerPercentage = 1;
+const triggerPercentage = 3;
 const orderForDays = 30;
 const userPublicKey = keypair.publicKey;
 const millisecondsInDay = 86100000;
-const minimumIntervalTime = 600000;
+const minimumIntervalTime = 3600000;
 const maximumIntervalTime = 6000000;
 let intervalTime = 0;
 let nowSec;
@@ -122,7 +122,7 @@ async function sendTransactions(txInstruction) {
     const tx = new web3.Transaction().add(...txInstruction);
     return await connection.sendTransaction(tx, [keypair]);
   } catch (e) {
-    Write.printError(e);
+    console.error(e);
   }
 }
 
@@ -137,7 +137,7 @@ const getResourcesLeft = (
   return (
     fleetResourceCapacity -
     (currentTimeSec - currentCapacityTimestamp) /
-      (shipTimeToBurnOneResource / 1000)
+    (shipTimeToBurnOneResource / 1000)
   );
 };
 
@@ -199,7 +199,7 @@ const sendMarketOrder = async ({ order, quantity }) => {
       [keypair]
     );
   } catch (e) {
-    Write.printError(e);
+    console.error(e);
   }
 };
 
@@ -242,9 +242,8 @@ const haveEnoughResources = ({ fleet, shipInfo }, nowSec) => {
     const left = getResourcesLeft(
       fleet[`${fleetResource}CurrentCapacity`],
       shipInfo[
-        `millisecondsToBurnOne${
-          resource.charAt(0).toUpperCase() + resource.slice(1)
-        }`
+      `millisecondsToBurnOne${resource.charAt(0).toUpperCase() + resource.slice(1)
+      }`
       ],
       fleet.currentCapacityTimestamp,
       nowSec
@@ -254,6 +253,7 @@ const haveEnoughResources = ({ fleet, shipInfo }, nowSec) => {
     const current = left * shipAmount;
     const needed = max - current;
     if (inventory[resource] < needed) {
+      console.error("nicht genug resources");
       enoughResources = false;
     }
   }
@@ -431,7 +431,7 @@ async function start(isFirst = false) {
     });
     activeFleets.sort((a, b) =>
       nftInformation.find((nft) => nft.mint === a.shipMint.toString())?.name <
-      nftInformation.find((nft) => nft.mint === b.shipMint.toString())?.name
+        nftInformation.find((nft) => nft.mint === b.shipMint.toString())?.name
         ? -1
         : 1
     );
@@ -464,7 +464,7 @@ async function start(isFirst = false) {
       nowSec
     );
 
-    Write.printPercent(healthPercent > 0 ? healthPercent : 0 , "HEALTH");
+    Write.printPercent(healthPercent > 0 ? healthPercent : 0, "HEALTH");
     if (healthPercent <= triggerPercentage) needTransaction = true;
 
     const fuelPercent = calculatePercentLeft(
@@ -556,12 +556,12 @@ async function start(isFirst = false) {
                 Write.printLine({
                   text: " Resources resupplied successfully",
                 });
-                if(!!nftAutoBuyInformation) {
+                if (!!nftAutoBuyInformation) {
                   await processAutoBuy(nftAutoBuyInformation).then(async () => {
                     Write.printLine({
                       text:
-                          " Auto buy order completed: " +
-                          nftAutoBuyInformation.name,
+                        " Auto buy order completed: " +
+                        nftAutoBuyInformation.name,
                     });
                   });
                 }
